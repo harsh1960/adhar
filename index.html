@@ -50,7 +50,7 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* ================= LOGIN SCREEN (Centered Clean) ================= */
+    /* ================= LOGIN SCREEN ================= */
     #login-container {
         position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
         background: var(--bg-body); display: none; z-index: 2000;
@@ -639,6 +639,12 @@
     
     // Trigger alert click
     document.getElementById('wmAlert').onclick = () => document.getElementById('btnUpgrade-nav').click();
+    
+    // Fake Payment
+    ui.btnPay.addEventListener('click', () => {
+        const sel = document.querySelector('.plan-card.active');
+        if(sel) alert(`Redirecting to payment... (Integration Pending)`);
+    });
 
 </script>
 
@@ -716,33 +722,47 @@
     // PDF Download
     window.downloadPDF = async () => {
         const btn = document.getElementById('dlBtn');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
         
         const f = document.getElementById('cardFront');
         const b = document.getElementById('cardBack');
         
-        // Reset scale for capture
-        const reset = (el) => { el.style.transform = 'none'; el.style.margin = '0'; };
-        const restore = (el) => { el.style.transform = ''; el.style.margin = ''; };
-        reset(f); reset(b);
+        // Temp Reset for Full Capture
+        const styleReset = (el) => { el.style.transform = 'none'; el.style.margin = '0'; };
+        const styleRestore = (el) => { el.style.transform = ''; el.style.margin = ''; };
+        
+        styleReset(f); styleReset(b);
         window.scrollTo(0,0);
         
-        document.getElementById('wmAlert').style.display = 'none';
+        // Hide Alert
+        const alertBox = document.getElementById('wmAlert');
+        if(alertBox) alertBox.style.display = 'none';
 
         try {
-            const c1 = await html2canvas(f, { scale: 2, useCORS: true });
-            const c2 = await html2canvas(b, { scale: 2, useCORS: true });
-            const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: [85.6, 54] });
-            pdf.addImage(c1.toDataURL('image/jpeg'), 'JPEG', 0, 0, 85.6, 54);
-            pdf.addPage();
-            pdf.addImage(c2.toDataURL('image/jpeg'), 'JPEG', 0, 0, 85.6, 54);
+            const c1 = await html2canvas(f, { scale: 3, useCORS: true });
+            const c2 = await html2canvas(b, { scale: 3, useCORS: true });
+            
+            // Custom ID-1 size x 2 (Stacked)
+            // 85.6mm width, 108mm height (54 * 2)
+            const pdf = new window.jspdf.jsPDF({ 
+                orientation: 'p', 
+                unit: 'mm', 
+                format: [85.6, 108] 
+            });
+
+            // Front at top (y=0)
+            pdf.addImage(c1.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 85.6, 54);
+            // Back at bottom (y=54)
+            pdf.addImage(c2.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 54, 85.6, 54);
+            
             pdf.save('card.pdf');
         } catch(e) { console.error(e); }
 
-        restore(f); restore(b);
-        if(!window.isPremiumUser) document.getElementById('wmAlert').style.display = 'block';
+        // Restore
+        styleRestore(f); styleRestore(b);
+        if(!window.isPremiumUser && alertBox) alertBox.style.display = 'block';
         
-        btn.innerHTML = '<i class="fas fa-file-download"></i> Download PDF';
+        btn.innerHTML = '<i class="fas fa-file-download"></i> Download PDF'; btn.disabled = false;
     };
 </script>
 
