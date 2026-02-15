@@ -706,13 +706,19 @@
         window.scrollTo(0,0);
         document.getElementById('wmAlert').style.display = 'none';
 
+        // === NAME LOGIC ADDED HERE ===
+        const nameVal = document.getElementById('inName').value.trim();
+        const fileName = nameVal ? nameVal + ".pdf" : "adhar.pdf";
+
         try {
             const c1 = await html2canvas(f, { scale: 3, useCORS: true });
             const c2 = await html2canvas(b, { scale: 3, useCORS: true });
             const pdf = new window.jspdf.jsPDF({ orientation: 'p', unit: 'mm', format: [85.6, 108] });
             pdf.addImage(c1.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 85.6, 54);
             pdf.addImage(c2.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 54, 85.6, 54);
-            pdf.save('card.pdf');
+            
+            // === MODIFIED SAVE CALL ===
+            pdf.save(fileName);
             
             // SHOW TOAST
             const toast = document.getElementById('downloadToast');
