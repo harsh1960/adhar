@@ -693,58 +693,40 @@
         });
     });
 
-    // =======================================================
-    // UPDATED DOWNLOAD FUNCTION FOR ANDROID INTEGRATION
-    // =======================================================
     window.downloadPDF = async () => {
         const btn = document.getElementById('dlBtn');
-        // UX: Show loading state
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true;
         
         const f = document.getElementById('cardFront');
         const b = document.getElementById('cardBack');
         
-        // Temporarily reset transforms for clean capture
         const reset = (el) => { el.style.transform = 'none'; el.style.margin = '0'; };
         const restore = (el) => { el.style.transform = ''; el.style.margin = ''; };
         reset(f); reset(b);
         window.scrollTo(0,0);
         document.getElementById('wmAlert').style.display = 'none';
 
-        // 1. DETERMINE FILENAME
+        // === NAME LOGIC ADDED HERE ===
         const nameVal = document.getElementById('inName').value.trim();
         const fileName = nameVal ? nameVal + ".pdf" : "adhar.pdf";
 
         try {
-            // 2. GENERATE PDF (This takes 1-2 seconds)
             const c1 = await html2canvas(f, { scale: 3, useCORS: true });
             const c2 = await html2canvas(b, { scale: 3, useCORS: true });
             const pdf = new window.jspdf.jsPDF({ orientation: 'p', unit: 'mm', format: [85.6, 108] });
             pdf.addImage(c1.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 85.6, 54);
             pdf.addImage(c2.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 54, 85.6, 54);
             
-            // 3. SEND TO ANDROID VS DOWNLOAD IN BROWSER
-            if (window.Android && window.Android.saveNamedPdf) {
-                // We are inside the Android App
-                var pdfData = pdf.output('datauristring');
-                // Send the data + the custom filename
-                window.Android.saveNamedPdf(pdfData, fileName);
-            } else {
-                // We are in a normal web browser (Chrome/Desktop)
-                pdf.save(fileName);
-            }
+            // === MODIFIED SAVE CALL ===
+            pdf.save(fileName);
             
-            // 4. SHOW SUCCESS TOAST
+            // SHOW TOAST
             const toast = document.getElementById('downloadToast');
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
 
-        } catch(e) { 
-            console.error(e); 
-            alert("Error generating card. Please try again.");
-        }
+        } catch(e) { console.error(e); }
 
-        // Restore UI
         restore(f); restore(b);
         if(!window.isPremiumUser) document.getElementById('wmAlert').style.display = 'block';
         btn.innerHTML = '<i class="fas fa-file-download"></i> Download PDF'; btn.disabled = false;
