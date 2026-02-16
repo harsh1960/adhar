@@ -449,14 +449,49 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // =========================================================
+    // UPDATE THESE LINKS BELOW WITH YOUR ACTUAL PAYMENT LINKS
+    // =========================================================
     const PLANS_DATA = {
         "1_month": [
-            { id: "standard_1m", name: "Standard", price: 199, desc: "20 cards/day", highlight: false },
-            { id: "professional_1m", name: "Pro Plan", price: 349, desc: "60 cards/day", highlight: true, tag: "Best Value" }
+            { 
+                id: "standard_1m", 
+                name: "Standard", 
+                price: 199, 
+                desc: "20 cards/day", 
+                highlight: false,
+                link: "https://payments.cashfree.com/forms/adhar199" // <--- PASTE LINK
+            },
+            { 
+                id: "professional_1m", 
+                name: "Pro Plan", 
+                price: 349, 
+                desc: "60 cards/day", 
+                highlight: true, 
+                tag: "Best Value",
+                link: "https://payments.cashfree.com/forms/adhar349" // <--- PASTE LINK
+            }
         ],
         "3_months": [
-            { id: "standard_3m", name: "Standard", price: 549, desc: "20 cards/day", highlight: false, savings: 48 },
-            { id: "professional_3m", name: "Pro Plan", price: 899, desc: "60 cards/day", highlight: true, tag: "Super Saver", savings: 148 }
+            { 
+                id: "standard_3m", 
+                name: "Standard", 
+                price: 549, 
+                desc: "20 cards/day", 
+                highlight: false, 
+                savings: 48,
+                link: "https://payments.cashfree.com/forms/adhar549" // <--- PASTE LINK
+            },
+            { 
+                id: "professional_3m", 
+                name: "Pro Plan", 
+                price: 899, 
+                desc: "60 cards/day", 
+                highlight: true, 
+                tag: "Super Saver", 
+                savings: 148,
+                link: "https://payments.cashfree.com/forms/adhar899" // <--- PASTE LINK
+            }
         ]
     };
     const LIMIT_RULES = { "free": 2, "standard_1m": 20, "standard_3m": 20, "professional_1m": 60, "professional_3m": 60 };
@@ -576,6 +611,10 @@
         PLANS_DATA[currentDuration].forEach((plan, idx) => {
             const div = document.createElement('div');
             div.className = `plan-card ${plan.highlight ? 'active' : ''}`;
+            
+            // STORE THE LINK IN THE ELEMENT FOR RETRIEVAL LATER
+            div.dataset.link = plan.link; 
+
             div.onclick = () => {
                 document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
                 div.classList.add('active');
@@ -629,7 +668,24 @@
     }
     
     document.getElementById('wmAlert').onclick = () => document.getElementById('btnUpgrade-nav').click();
-    document.getElementById('btnPay').addEventListener('click', () => { const sel = document.querySelector('.plan-card.active'); if(sel) alert(`Redirecting to payment... (Integration Pending)`); });
+    
+    // =========================================================
+    // MODIFIED PAYMENT CLICK HANDLER
+    // =========================================================
+    document.getElementById('btnPay').addEventListener('click', () => {
+        const sel = document.querySelector('.plan-card.active');
+        if(sel) {
+            const link = sel.dataset.link;
+            if(link && link !== "PASTE_YOUR_LINK_HERE") {
+                // Open link in a new tab
+                window.open(link, '_blank');
+            } else {
+                alert("Payment link not configured yet. Please update the code.");
+            }
+        } else {
+            alert("Please select a plan.");
+        }
+    });
 
 </script>
 
@@ -706,7 +762,6 @@
         window.scrollTo(0,0);
         document.getElementById('wmAlert').style.display = 'none';
 
-        // === NAME LOGIC ADDED HERE ===
         const nameVal = document.getElementById('inName').value.trim();
         const fileName = nameVal ? nameVal + ".pdf" : "adhar.pdf";
 
@@ -717,10 +772,8 @@
             pdf.addImage(c1.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 85.6, 54);
             pdf.addImage(c2.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 54, 85.6, 54);
             
-            // === MODIFIED SAVE CALL ===
             pdf.save(fileName);
             
-            // SHOW TOAST
             const toast = document.getElementById('downloadToast');
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
